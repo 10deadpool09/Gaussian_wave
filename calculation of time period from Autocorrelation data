@@ -1,0 +1,49 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug 15 14:57:16 2022
+
+@author: Lakshya windows
+"""
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+import pandas as pd
+
+
+data=pd.read_csv("After_SLM_CC_-0.78_modulo_W-W0_centered_2pi.csv")
+
+
+xdata=data.loc[:,"x"]
+xdata=2*xdata
+xdata=xdata-np.min(xdata)
+ydata=data.loc[:,"y1"]
+
+
+
+
+def Gauss(x, A, B,x0,A1):
+    y =A1+A*np.exp((-1/(2*B**2))*(x-x0)**2)
+    return y
+
+c=3e-4              #speed of light in mm per femtosecond
+
+#initial guess
+p0=[np.argmax(ydata)-np.argmax(ydata),10,xdata[np.argmax(ydata,axis=0)],np.average(ydata[-10:])]
+
+parameters, covariance = curve_fit(Gauss, xdata, ydata,p0)
+FWHM_convolution=2*np.sqrt(2*np.log(2))*parameters[1]       #in mm
+FWHM_pulse=FWHM_convolution/1.41                            #in mm
+t=FWHM_pulse/c                                              #in femtosecond
+
+x_max=len(xdata)
+x=np.linspace(xdata[0],xdata[x_max-1],len(xdata))
+plt.plot(x/c,Gauss(x,parameters[0],parameters[1],parameters[2],parameters[3]))
+plt.plot(xdata/c,ydata)
+# plt.plot(t_x,Gauss(t_x,parameters[0],parameters[1],parameters[2],parameters[3]))
+# plt.plot(t_x,ydata)
+plt.xlabel("Time (fs)")
+plt.ylabel("Amplitude")
+#plt.plot(xdata,y2data)
+plt.show()
