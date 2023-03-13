@@ -1,0 +1,130 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jan 16 17:59:19 2023
+
+@author: Lakshya windows
+"""
+
+
+import math
+import cmath
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+p = math.pi
+axis_color = 'white'
+
+
+WL = 730e-9
+c = 3e8
+f = (c/WL)/10**(15)  # in femtohertz
+# for 67 fs laser (delta_f * delta_t = 0.441 for gaussian)
+# del_f = 0.3832832946/67        #gaussian width  0.3120258583
+# sigma = np.sqrt(2*np.log(2))/(2*np.pi*del_f)  # for a given value of del_f
+n=2000
+
+
+sigma=60/(2*np.sqrt(np.log(2)))  # for 60 fs pulse
+del_f=np.sqrt(2*np.log(2))/(np.pi*sigma)
+#del_f=0.44/60
+
+def Gauss(x, A, B,x0,A1):
+    y =A1+A*np.exp((-1/(2*B**2))*(x-x0)**2)
+    return y
+
+def function(k):
+    n=1000
+    freq = np.linspace(f-1*del_f, f+1*del_f,int(n))
+
+    y = []
+    for i in freq:
+        y.append(((np.sqrt(2*np.pi)*sigma))*np.exp(-2*(np.pi*sigma*(i-f))**2))
+
+
+    #for making time array dt*df=1/N
+    df=freq[2]-freq[1]
+    dt=1/(df*n)
+
+    t_ini=0
+    time=np.arange(0,n)*dt+t_ini
+    # y_E = np.fft.fft(y)            # electric field in time
+
+    # Add second order chirp to the pulse
+
+    k1 =k*10**6
+    k2 =0
+    k22=0
+    y_chirp_added_1 = []  # E(freq)
+    y_chirp_added_2 = []
+    phase1 = []
+    phase2 = []
+
+    for i in range(n):
+        # second order component in spectral phase
+        y_chirp_added_1.append(
+            y[i]*(cmath.exp(complex(0, -50*freq[i]+k1*(freq[i])**2+k2*freq[i]**3))))
+        # y_chirp_added_2.append(
+            # y[i]*(cmath.exp(complex(0, k22*freq[i]**2))))
+
+    for i in range(n):
+        phase1.append(np.arctan(y_chirp_added_1[i].imag/y_chirp_added_1[i].real))  # phase
+        # phase2.append(np.arctan(y_chirp_added_2[i].imag/y_chirp_added_2[i].real))
+
+    # convert to E(t)
+    y_chirp_added_1 = np.fft.fft(y_chirp_added_1)      # E(t) after adding chirp
+    # y_chirp_added_2 = np.fft.fft(y_chirp_added_2)
+
+    y1 = abs(y_chirp_added_1)**2
+    # y2 = abs(y_chirp_added_2)**2
+
+    for i in range(int(n/2)):
+        # t1 = time[i]
+        # t2 = time[i+int(n/2)]
+        # time[i] = t2
+        # time[i+int(n/2)] = t1
+
+        y11 = y1[i]
+        y12 = y1[i+int(n/2)]
+        y1[i] = y12
+        y1[i+int(n/2)] = y11
+
+        # y21 = y2[i]
+        # y22 = y2[i+int(n/2)]
+        # y2[i] = y22
+        # y2[i+int(n/2)] = y21
+
+
+    y1_max=np.amax(y1)
+
+    y1=y1/(y1_max)
+    
+    p0=[np.argmax(y1),100,time[np.argmax(y1,axis=0)],np.average(y1[-10:])]
+    parameters, covariance = curve_fit(Gauss, time, y1,p0)
+    FWHM=2*np.sqrt(2*np.log(2))*parameters[1]
+    t=FWHM                                     # in fs                                  
+    return t
+
+
+k=[]
+t=[]
+k_dip=[]
+t_dip=[]
+for i in range(501):
+    k.append(-0.5+i/500)
+    t.append(function(-0.5+i/500))
+    print(i)
+
+
+# for i in range(len(t)-10):
+#     if np.abs(t[i+5])==np.amin(t[i:i+10]):
+#                             k_dip.append(k[i+5])
+#                             t_dip.append(t[i+5])
+                                  
+
+plt.plot(k,np.abs(t))
+plt.xlabel('k(second order spectral phase factor)',fontsize=14)
+plt.ylabel('Pulse width in fs',fontsize=14)
+plt.tight_layout()
+plt.show()
+    
