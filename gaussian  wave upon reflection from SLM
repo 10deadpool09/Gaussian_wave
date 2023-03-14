@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Feb 20 19:00:17 2023
+
+@author: Lakshya windows
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib qt
+
+mm = 1/254
+
+x=np.linspace(-10,10,500)
+y=np.linspace(-10,10,500)
+
+gaussian=np.zeros((len(x),len(y)))
+k=np.ones((len(x),len(y)))
+for i in range(len(x)):
+    for j in range(len(y)):
+        gaussian[i,j]=np.exp(30*np.exp(-0.1*(x[i]**2+y[j]**2)))
+
+        if i%10==0 or j%10==0 or i%10==1 or j%10==1 or i%10==2 or j%10==2 or i%10==3 or j%10==3:
+            k[i,j]=0
+            
+result=np.fft.fft2(k*gaussian)
+result=np.fft.fftshift(result)
+
+fig,axs=plt.subplots(1,3,figsize=(120*mm,30*mm))
+
+axs[0]=plt.subplot(1,3,1)
+axs[0].set_title('Pixelated SLM screen',fontsize=15)
+plt.imshow(k)
+
+axs[1]=plt.subplot(1, 3,2)
+axs[1].set_title('Incident Gaussian beam',fontsize=15)
+plt.imshow(gaussian)
+
+axs[2]=plt.subplot(1,3,3)
+axs[2].set_title('Reflected intensity profile',fontsize=15)
+plt.imshow(abs(result))
+
+
+plt.show()
