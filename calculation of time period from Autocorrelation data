@@ -30,7 +30,7 @@ def Gauss(x, A, B,x0,A1):
 c=3e-4              #speed of light in mm per femtosecond
 
 #initial guess
-p0=[np.argmax(ydata)-np.argmax(ydata),10,xdata[np.argmax(ydata,axis=0)],np.average(ydata[-10:])]
+p0=[np.max(ydata)-np.min(ydata),0.05,xdata[np.argmax(ydata,axis=0)],np.average(ydata[-10:])]
 
 parameters, covariance = curve_fit(Gauss, xdata, ydata,p0)
 FWHM_convolution=2*np.sqrt(2*np.log(2))*parameters[1]       #in mm
