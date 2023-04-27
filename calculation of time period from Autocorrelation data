@@ -12,7 +12,7 @@ from scipy.optimize import curve_fit
 import pandas as pd
 
 
-data=pd.read_csv("After_SLM_CC_-0.78_modulo_W-W0_centered_2pi.csv")
+data=pd.read_csv("DATA_FILE.csv")
 
 
 xdata=data.loc[:,"x"]
