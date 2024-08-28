@@ -11,19 +11,23 @@ freq_final=5                         #final frequency
 freq_range=freq_final-freq_ini       #frequency range
 factor=100                           #number of points per unit frequency range
 
+%matplotlib qt
+
 def efield_freq(E,sigma,beta,t_0):
-    y=[]
+    y=[]                                 
     freq_intensity=[]
     for i in range(freq_range*factor):
         add=E*np.exp(-0.5*(2*p*sigma*(freq_ini+i/factor))**2)*cmath.exp(complex(0,beta*(freq_ini+i/factor)**2+(freq_ini+i/factor)*t_0))
         y.append(add)
-        freq_intensity.append(add**2)
-    E_t=np.fft.fft(y)                     #electric field in time domain
-    intensity=E_t**2
-    return freq_intensity                 #can be changed to E_t or intensity if required
+        freq_intensity.append(np.abs(add))
+    E_t=np.fft.fftshift(np.fft.fft(np.fft.ifftshift(y)))                     #electric field in time domain
+    intensity=np.abs(E_t)**2                                                 #Electric field intensity in time
+    return intensity                                                         #can be changed to E_t or intensity if required
 
-freq=np.linspace(freq_ini,freq_final,freq_range*factor)
-time=np.fft.fftfreq(len(freq))
+
+
+freq=np.linspace(freq_ini,freq_final,freq_range*factor)                       #frequency axis
+time=np.fft.fftshift(np.fft.fftfreq(len(freq)))                               #time axis
 
 fig = plt.figure()
 ax=fig.add_subplot(111)
